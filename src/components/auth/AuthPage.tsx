@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { CinematicBackgroundVideo } from '@/components/common/CinematicBackgroundVideo';
+import { GoogleOAuthModal } from './GoogleOAuthModal';
 
 interface AuthPageProps {
-  onAuthSuccess: (user: { name: string; email: string }) => void;
+  onAuthSuccess: (user: { name: string; email: string; picture?: string }) => void;
 }
 
 export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
@@ -54,6 +55,32 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
       setLoading(false);
       onAuthSuccess({ name: 'Demo Trader', email: 'demo@apogee.pro' });
     }, 700);
+  };
+
+  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
+
+  const handleGoogleClick = () => {
+    const DEFAULT_GOOGLE_CLIENT_ID = '569756310563-91mpouatvn8ktuarlrfdhh0fjaju9v7m.apps.googleusercontent.com';
+    const clientId =
+      (import.meta.env.VITE_GOOGLE_CLIENT_ID as string) ||
+      localStorage.getItem('apogee_google_client_id') ||
+      DEFAULT_GOOGLE_CLIENT_ID;
+
+    if (clientId && clientId.includes('.apps.googleusercontent.com')) {
+      const redirectUri = window.location.origin;
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(
+        clientId
+      )}&redirect_uri=${encodeURIComponent(
+        redirectUri
+      )}&response_type=token&scope=email%20profile%20openid&prompt=select_account`;
+      const popup = window.open(authUrl, 'GoogleSignInPopup', 'width=500,height=650,top=100,left=100');
+      if (!popup) {
+        window.location.href = authUrl;
+      }
+      return;
+    }
+    // If no Client ID configured, show the Google Account Chooser
+    setIsGoogleModalOpen(true);
   };
 
   return (
@@ -336,8 +363,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
             {/* Social OAuth Buttons */}
             <div className="flex gap-2.5 mt-3">
               <button
-                onClick={() => onAuthSuccess({ name: 'Google Trader', email: 'trader@gmail.com' })}
-                className="flex-1 py-2 rounded-xl border border-white/[0.12] bg-white/[0.05] backdrop-blur-md text-white/70 hover:bg-white/[0.1] hover:text-white transition-all text-xs font-medium flex items-center justify-center gap-2"
+                type="button"
+                onClick={handleGoogleClick}
+                disabled={loading}
+                title="Sign in with your Google account"
+                className="flex-1 py-2 rounded-xl border border-white/[0.12] bg-white/[0.05] backdrop-blur-md text-white/70 hover:bg-white/[0.1] hover:text-white transition-all text-xs font-medium flex items-center justify-center gap-2 group relative"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -345,9 +375,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                 </svg>
-                Google
+                <span>Google</span>
               </button>
               <button
+                type="button"
                 onClick={() => onAuthSuccess({ name: 'Apple Trader', email: 'trader@icloud.com' })}
                 className="flex-1 py-2 rounded-xl border border-white/[0.12] bg-white/[0.05] backdrop-blur-md text-white/70 hover:bg-white/[0.1] hover:text-white transition-all text-xs font-medium flex items-center justify-center gap-2"
               >
@@ -365,6 +396,13 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
           </div>
         </div>
       </div>
+
+      {/* Authentic Google Account Chooser Modal */}
+      <GoogleOAuthModal
+        isOpen={isGoogleModalOpen}
+        onClose={() => setIsGoogleModalOpen(false)}
+        onAuthSuccess={onAuthSuccess}
+      />
     </div>
   );
 };

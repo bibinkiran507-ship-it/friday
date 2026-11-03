@@ -1,5 +1,8 @@
 import 'dotenv/config';
 import http from 'http';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import express from 'express';
 import cors from 'cors';
 import { WebSocketServer, WebSocket } from 'ws';
@@ -8,6 +11,9 @@ import { marketEngine } from './marketEngine.js';
 import { orderEngine } from './orderEngine.js';
 import { WsMessage } from './types.js';
 import { isGeminiAvailable } from './geminiEngine.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -23,6 +29,18 @@ app.use('/api', apiRouter);
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
+
+// Serve frontend static build if dist folder exists (Production mode)
+const distPath = path.resolve(__dirname, '../dist');
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/ws') || req.path === '/health') {
+      return next();
+    }
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+}
 
 // Create HTTP server
 const server = http.createServer(app);

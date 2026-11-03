@@ -267,8 +267,12 @@ function Nav() {
           <div className="h-[52px] p-[3px] bg-[rgba(0,0,0,0.35)] rounded-[13px] backdrop-blur-[17px] border border-white/[0.06] flex items-center gap-[6px]">
             {user && (
               <div className="flex items-center gap-2 px-3 text-white/80 text-[13px]">
-                <div className="w-6 h-6 rounded-full bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-blue-300 font-bold text-[11px]">
-                  {user.name.charAt(0).toUpperCase()}
+                <div className="w-6 h-6 rounded-full bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-blue-300 font-bold text-[11px] overflow-hidden shrink-0">
+                  {user.picture ? (
+                    <img src={user.picture} alt={user.name} className="w-full h-full object-cover rounded-full" referrerPolicy="no-referrer" />
+                  ) : (
+                    user.name.charAt(0).toUpperCase()
+                  )}
                 </div>
                 <span className="font-medium max-w-[120px] truncate">{user.name}</span>
               </div>

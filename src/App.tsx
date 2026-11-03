@@ -1,4 +1,4 @@
-import { useState, createContext, useContext } from 'react';
+import { useState, useEffect, createContext, useContext } from 'react';
 import { TradingProvider, useTrading } from '@/context/TradingContext';
 import Hero from '@/components/Hero';
 import { MarketTickerBar } from '@/components/landing/MarketTickerBar';
@@ -14,6 +14,7 @@ import { CinematicBackgroundVideo } from '@/components/common/CinematicBackgroun
 export interface AuthUser {
   name: string;
   email: string;
+  picture?: string;
 }
 
 interface AuthContextValue {
@@ -144,6 +145,55 @@ export default function App() {
     sessionStorage.removeItem('apogee_user');
     setUser(null);
   };
+
+  // Check for Google OAuth hash in URL: #access_token=... (if redirect flow or popup was used)
+  useEffect(() => {
+    const handleAccessToken = (accessToken: string) => {
+      fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+        .then((res) => res.json())
+        .then((profile) => {
+          if (profile.email) {
+            const newUser: AuthUser = {
+              name: profile.name || profile.given_name || profile.email.split('@')[0],
+              email: profile.email,
+              picture: profile.picture,
+            };
+            // If inside a popup window, transmit to parent window and close popup
+            if (window.opener && window.opener !== window) {
+              try {
+                window.opener.postMessage({ type: 'GOOGLE_AUTH_SUCCESS', user: newUser }, '*');
+                window.close();
+                return;
+              } catch (e) {
+                console.warn('Could not postMessage to opener:', e);
+              }
+            }
+            handleAuthSuccess(newUser);
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          }
+        })
+        .catch((err) => console.error('Google OAuth redirect token error:', err));
+    };
+
+    if (window.location.hash.includes('access_token')) {
+      const params = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = params.get('access_token');
+      if (accessToken) {
+        handleAccessToken(accessToken);
+      }
+    }
+
+    // Listen for postMessage from Google OAuth popup
+    const handlePopupMessage = (e: MessageEvent) => {
+      if (e.data?.type === 'GOOGLE_AUTH_SUCCESS' && e.data?.user) {
+        handleAuthSuccess(e.data.user);
+      }
+    };
+    window.addEventListener('message', handlePopupMessage);
+    return () => window.removeEventListener('message', handlePopupMessage);
+  }, []);
 
   if (!user) {
     return <AuthPage onAuthSuccess={handleAuthSuccess} />;

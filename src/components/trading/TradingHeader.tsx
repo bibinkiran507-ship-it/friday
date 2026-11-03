@@ -391,8 +391,12 @@ export const TradingHeader: React.FC<TradingHeaderProps> = () => {
             className="flex items-center gap-1.5 p-1 pr-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] transition-colors"
             title="User Settings & Controls"
           >
-            <div className="w-6 h-6 rounded-md bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400 text-[11px] font-bold">
-              {user?.name ? user.name[0].toUpperCase() : 'U'}
+            <div className="w-6 h-6 rounded-md bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400 text-[11px] font-bold overflow-hidden shrink-0">
+              {user?.picture ? (
+                <img src={user.picture} alt={user.name} className="w-full h-full object-cover rounded-md" referrerPolicy="no-referrer" />
+              ) : (
+                user?.name ? user.name[0].toUpperCase() : 'U'
+              )}
             </div>
             <span className="hidden sm:inline text-[11px] font-medium text-white max-w-[80px] truncate">
               {user?.name || 'Trader'}
@@ -404,8 +408,20 @@ export const TradingHeader: React.FC<TradingHeaderProps> = () => {
             <div className="absolute right-0 top-[44px] w-[240px] bg-[#0A0E24]/85 border border-white/15 rounded-xl shadow-2xl p-2 z-50 backdrop-blur-2xl animate-fade-in text-[12px]">
               {/* Account summary header */}
               <div className="p-2 border-b border-white/[0.06] mb-1">
-                <div className="text-white font-semibold text-[13px]">{user?.name || 'Trader'}</div>
-                <div className="text-white/40 text-[11px] truncate">{user?.email || 'trader@apogee.pro'}</div>
+                <div className="flex items-start gap-2.5">
+                  {user?.picture && (
+                    <img
+                      src={user.picture}
+                      alt={user.name}
+                      className="w-8 h-8 rounded-lg border border-white/20 object-cover shrink-0 mt-0.5"
+                      referrerPolicy="no-referrer"
+                    />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="text-white font-semibold text-[13px] truncate">{user?.name || 'Trader'}</div>
+                    <div className="text-white/40 text-[11px] truncate">{user?.email || 'trader@apogee.pro'}</div>
+                  </div>
+                </div>
                 <div className="mt-2 flex items-center justify-between text-[11px] font-mono">
                   <span className="text-white/40">Available Cash:</span>
                   <span className="text-emerald-400 font-semibold">${balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
