@@ -34,8 +34,9 @@ app.get('/health', (_req, res) => {
 const distPath = path.resolve(__dirname, '../dist');
 if (fs.existsSync(distPath)) {
   app.use(express.static(distPath));
-  app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api') || req.path.startsWith('/ws') || req.path === '/health') {
+  // Client SPA fallback handler (Express v5 safe)
+  app.use((req, res, next) => {
+    if (req.method !== 'GET' || req.path.startsWith('/api') || req.path.startsWith('/ws') || req.path === '/health') {
       return next();
     }
     res.sendFile(path.join(distPath, 'index.html'));
